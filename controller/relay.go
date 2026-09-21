@@ -72,8 +72,10 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	//originalModel := common.GetContextKeyString(c, constant.ContextKeyOriginalModel)
 
 	var (
-		newAPIError *types.NewAPIError
-		ws          *websocket.Conn
+		newAPIError       *types.NewAPIError
+		ws                *websocket.Conn
+		relayInfo         *relaycommon.RelayInfo
+		requestLogCapture *service.RequestLogCapture
 	)
 
 	if relayFormat == types.RelayFormatOpenAIRealtime {
@@ -105,6 +107,9 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 				})
 			}
 		}
+		if requestLogCapture != nil {
+			requestLogCapture.Finish(c, newAPIError)
+		}
 	}()
 
 	request, err := helper.GetAndValidateRequest(c, relayFormat)
@@ -118,11 +123,12 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		return
 	}
 
-	relayInfo, err := relaycommon.GenRelayInfo(c, relayFormat, request, ws)
+	relayInfo, err = relaycommon.GenRelayInfo(c, relayFormat, request, ws)
 	if err != nil {
 		newAPIError = types.NewError(err, types.ErrorCodeGenRelayInfoFailed)
 		return
 	}
+	requestLogCapture = service.BeginRequestLogCapture(c, relayFormat, request, relayInfo)
 
 	defer func() {
 		recovered := recover()

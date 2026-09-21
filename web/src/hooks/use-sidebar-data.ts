@@ -21,6 +21,7 @@ import {
   Box,
   ClipboardList,
   CreditCard,
+  FileSearch,
   FileText,
   FlaskConical,
   Key,
@@ -146,6 +147,12 @@ export function useSidebarData(): SidebarData {
             title: t('Users'),
             url: '/users',
             icon: Users,
+          },
+          {
+            title: t('Request Logs'),
+            url: '/request-logs',
+            icon: FileSearch,
+            requiredRole: ROLE.ADMIN,
           },
           {
             title: t('Redemption Codes'),

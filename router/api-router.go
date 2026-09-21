@@ -319,6 +319,8 @@ func SetApiRouter(router *gin.Engine) {
 		logRoute.GET("/self", middleware.UserAuth(), controller.GetUserLogs)
 		logRoute.GET("/self/search", middleware.UserAuth(), middleware.SearchRateLimit(), controller.SearchUserLogs)
 
+		registerRequestLogRoutes(apiRouter)
+
 		systemTaskRoute := apiRouter.Group("/system-task")
 		systemTaskRoute.Use(middleware.RootAuth())
 		{
@@ -426,5 +428,14 @@ func SetApiRouter(router *gin.Engine) {
 			deploymentsRoute.POST("/:id/extend", controller.ExtendDeployment)
 			deploymentsRoute.DELETE("/:id", controller.DeleteDeployment)
 		}
+	}
+}
+
+func registerRequestLogRoutes(apiRouter *gin.RouterGroup) {
+	requestLogRoute := apiRouter.Group("/request_logs")
+	requestLogRoute.Use(middleware.AdminAuth())
+	{
+		requestLogRoute.GET("/", controller.ListRequestLogs)
+		requestLogRoute.GET("/:id", controller.GetRequestLog)
 	}
 }

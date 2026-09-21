@@ -356,12 +356,17 @@ func runLogCleanupTask(ctx context.Context, task *model.SystemTask, runnerID str
 	}
 
 	for {
-		remaining, err := model.CountOldLog(ctx, payload.TargetTimestamp)
+		usageRemaining, err := model.CountOldLog(ctx, payload.TargetTimestamp)
 		if err != nil {
 			failSystemTask(task, runnerID, err)
 			return
 		}
-		syncLogCleanupStateFromRemaining(&state, remaining)
+		requestRemaining, err := model.CountOldRequestLog(ctx, payload.TargetTimestamp)
+		if err != nil {
+			failSystemTask(task, runnerID, err)
+			return
+		}
+		syncLogCleanupStateFromRemaining(&state, usageRemaining+requestRemaining)
 		if err := model.UpdateSystemTaskState(task.TaskID, runnerID, state); err != nil {
 			logSystemTaskLockError(ctx, task, err)
 			return
@@ -380,6 +385,13 @@ func runLogCleanupTask(ctx context.Context, task *model.SystemTask, runnerID str
 			if err != nil {
 				failSystemTask(task, runnerID, err)
 				return
+			}
+			if rowsAffected == 0 {
+				rowsAffected, err = model.DeleteExpiredRequestLogsBatch(ctx, payload.TargetTimestamp, payload.BatchSize)
+				if err != nil {
+					failSystemTask(task, runnerID, err)
+					return
+				}
 			}
 			if rowsAffected == 0 {
 				break

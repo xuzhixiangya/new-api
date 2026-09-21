@@ -120,6 +120,7 @@ func main() {
 
 	// 数据看板
 	go model.UpdateQuotaData()
+	service.StartRequestLogWriter()
 
 	if os.Getenv("CHANNEL_UPDATE_FREQUENCY") != "" {
 		frequency, err := strconv.Atoi(os.Getenv("CHANNEL_UPDATE_FREQUENCY"))
@@ -237,6 +238,11 @@ func main() {
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		common.SysError(fmt.Sprintf("server forced to shutdown: %v", err))
+	}
+	requestLogFlushCtx, requestLogFlushCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer requestLogFlushCancel()
+	if err := service.ShutdownRequestLogWriter(requestLogFlushCtx); err != nil {
+		common.SysError(fmt.Sprintf("request log writer shutdown timed out: %v", err))
 	}
 	// 内存中的看板数据保存入库，避免重启丢失未落库数据 (issue #5679)
 	if common.DataExportEnabled {
