@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Combobox } from '@/components/ui/combobox'
 import { CompactDateTimeRangePicker } from '@/features/usage-logs/components/compact-date-time-range-picker'
+import { getDefaultTimeRangeUnix } from '@/features/usage-logs/lib'
 import {
   LogsFilterField,
   LogsFilterInput,
@@ -185,10 +186,11 @@ export function RequestLogFilterBar(props: {
   const filterCount =
     advancedCount +
     [props.filters.protocol, props.filters.status].filter(Boolean).length
-  const hasFilters =
-    filterCount > 0 ||
-    props.filters.startTimestamp !== undefined ||
-    props.filters.endTimestamp !== undefined
+  const defaultTimeRange = getDefaultTimeRangeUnix()
+  const hasCustomDateRange =
+    props.filters.startTimestamp !== defaultTimeRange.startTimestamp ||
+    props.filters.endTimestamp !== defaultTimeRange.endTimestamp
+  const hasFilters = filterCount > 0 || hasCustomDateRange
 
   return (
     <LogsFilterToolbar

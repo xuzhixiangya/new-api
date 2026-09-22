@@ -36,6 +36,14 @@ const i18nKeys = {
   'Group Ratio': 'Group Ratio',
   'Total Cost': 'Total Cost',
   'Usage parameters': 'Usage parameters',
+  'Smart Router': 'Smart Router',
+  Tier: 'Tier',
+  Score: 'Score',
+  Stage: 'Stage',
+  Reason: 'Reason',
+  Continuation: 'Continuation',
+  Yes: 'Yes',
+  No: 'No',
 }
 
 function makeLog(other: LogOtherData): UsageLog {
@@ -93,6 +101,29 @@ function renderDetails(other: LogOtherData, promptTokens = 0): QueryClient {
 function rowValue(label: string): string | null {
   return screen.getByText(label).nextElementSibling?.textContent ?? null
 }
+
+test('shows smart router decision without repeating model names', () => {
+  const queryClient = renderDetails({
+    smart_router: {
+      requested: 'auto',
+      model: 'gpt-4o-mini',
+      tier: 'cheap',
+      score: 18,
+      stage: 'local',
+      reason: 'easy_keyword',
+      continuation: false,
+    },
+  })
+  expect(screen.getByText('Smart Router')).toBeVisible()
+  expect(rowValue('Tier')).toBe('cheap')
+  expect(rowValue('Score')).toBe('18')
+  expect(rowValue('Stage')).toBe('local')
+  expect(rowValue('Reason')).toBe('easy_keyword')
+  expect(rowValue('Continuation')).toBe('No')
+  expect(screen.queryByText('Original Model')).not.toBeInTheDocument()
+  expect(screen.queryByText('Routed Model')).not.toBeInTheDocument()
+  queryClient.clear()
+})
 
 test('shows the recorded request and response models in log details', () => {
   const queryClient = renderDetails({

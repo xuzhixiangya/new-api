@@ -331,6 +331,7 @@ const (
 	MsgDistributorNoAvailableChannelTaskPlugin = "distributor.no_available_channel_task_plugin"
 	MsgDistributorInvalidMidjourney            = "distributor.invalid_midjourney_request"
 	MsgDistributorInvalidParseModel            = "distributor.invalid_request_parse_model"
+	MsgDistributorSmartRouterNotConfigured     = "distributor.smart_router_not_configured"
 )
 
 // Custom OAuth provider related messages

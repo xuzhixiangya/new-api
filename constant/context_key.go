@@ -8,7 +8,11 @@ const (
 	ContextKeyEstimatedTokens ContextKey = "estimated_tokens"
 
 	ContextKeyOriginalModel    ContextKey = "original_model"
+	ContextKeyRequestedModel   ContextKey = "requested_model"
 	ContextKeyRequestStartTime ContextKey = "request_start_time"
+
+	ContextKeySmartRouterDecision ContextKey = "smart_router_decision"
+	ContextKeySmartRouterSkip     ContextKey = "smart_router_skip"
 
 	/* token related keys */
 	ContextKeyTokenUnlimited         ContextKey = "token_unlimited_quota"

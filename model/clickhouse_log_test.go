@@ -101,6 +101,14 @@ func TestClickHouseLogOrder(t *testing.T) {
 	assert.Equal(t, "logs.created_at desc, logs.request_id desc", clickHouseLogOrder("logs."))
 }
 
+func TestPrefixLikePatternWrapsUsernameForRightFuzzySearch(t *testing.T) {
+	assert.Equal(t, "alice%", prefixLikePattern("alice"))
+	assert.Equal(t, "al%", prefixLikePattern("  al  "))
+	assert.Equal(t, "a", prefixLikePattern("a"))
+	assert.Equal(t, "ali%", prefixLikePattern("ali%"))
+	assert.Equal(t, "", prefixLikePattern("   "))
+}
+
 func TestBuildLogLikeConditionUsesStandardEscape(t *testing.T) {
 	originalLogDatabaseType := common.LogDatabaseType()
 	t.Cleanup(func() {

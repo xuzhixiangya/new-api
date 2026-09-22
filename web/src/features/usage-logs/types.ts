@@ -204,6 +204,16 @@ export interface LogOtherData {
     upstream_model: string
     returned_model: string
   }
+  smart_router?: {
+    requested: string
+    model: string
+    tier?: string
+    score?: number
+    stage?: string
+    reason?: string
+    continuation?: boolean
+    confidence?: number
+  }
   audio_ratio?: number
   audio_completion_ratio?: number
   frt?: number

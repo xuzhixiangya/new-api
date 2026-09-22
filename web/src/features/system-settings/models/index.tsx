@@ -66,6 +66,12 @@ const defaultModelSettings: ModelSettings = {
   'group_ratio_setting.group_special_usable_group': '{}',
   'model_deployment.ionet.api_key': '',
   'model_deployment.ionet.enabled': false,
+  'smart_router_setting.enabled': false,
+  'smart_router_setting.cheap_model': '',
+  'smart_router_setting.mid_model': '',
+  'smart_router_setting.strong_model': '',
+  'smart_router_setting.classifier_model': '',
+  'smart_router_setting.classifier_timeout_ms': 400,
 }
 
 export function ModelSettings() {

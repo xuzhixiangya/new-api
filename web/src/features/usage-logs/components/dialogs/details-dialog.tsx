@@ -1128,6 +1128,43 @@ export function DetailsDialog(props: DetailsDialogProps) {
           />
         )}
 
+        {other?.smart_router && (
+          <DetailSection
+            label={t('Smart Router')}
+            icon={<Route className='size-4' />}
+          >
+            {other.smart_router.tier && (
+              <DetailRow label={t('Tier')} value={other.smart_router.tier} />
+            )}
+            {other.smart_router.score != null && (
+              <DetailRow
+                label={t('Score')}
+                value={String(other.smart_router.score)}
+              />
+            )}
+            {other.smart_router.stage && (
+              <DetailRow label={t('Stage')} value={other.smart_router.stage} />
+            )}
+            {other.smart_router.reason && (
+              <DetailRow
+                label={t('Reason')}
+                value={other.smart_router.reason}
+              />
+            )}
+            {other.smart_router.confidence != null &&
+              other.smart_router.confidence > 0 && (
+                <DetailRow
+                  label={t('Confidence')}
+                  value={String(other.smart_router.confidence)}
+                />
+              )}
+            <DetailRow
+              label={t('Continuation')}
+              value={other.smart_router.continuation ? t('Yes') : t('No')}
+            />
+          </DetailSection>
+        )}
+
         {other?.response_model && (
           <DetailSection label={t('Response Model')}>
             <ResponseModelDetails observation={other.response_model} />

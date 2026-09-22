@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 
@@ -95,14 +96,17 @@ func ListRequestLogs(filter RequestLogFilter, offset int, limit int) ([]RequestL
 		offset = 0
 	}
 
-	query := applyRequestLogFilter(DB.Model(&RequestLog{}), filter)
+	query, err := applyRequestLogFilter(DB.Model(&RequestLog{}), filter)
+	if err != nil {
+		return nil, 0, err
+	}
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	items := make([]RequestLogListItem, 0)
-	err := query.
+	err = query.
 		Select("id, request_id, user_id, username, token_id, token_name, protocol, model_name, response_model, status, http_status, is_stream, attempt_count, capture_status, record_truncated, partial, error_code, created_at, duration_ms").
 		Order("created_at DESC, id DESC").
 		Offset(offset).
@@ -155,15 +159,22 @@ func DeleteExpiredRequestLogsBatch(ctx context.Context, cutoff int64, limit int)
 	return result.RowsAffected, result.Error
 }
 
-func applyRequestLogFilter(query *gorm.DB, filter RequestLogFilter) *gorm.DB {
+func applyRequestLogFilter(query *gorm.DB, filter RequestLogFilter) (*gorm.DB, error) {
 	if filter.UserId > 0 {
 		query = query.Where("user_id = ?", filter.UserId)
 	}
 	if filter.TokenId > 0 {
 		query = query.Where("token_id = ?", filter.TokenId)
 	}
-	if filter.Username != "" {
-		query = query.Where("username = ?", filter.Username)
+	username := prefixLikePattern(filter.Username)
+	if strings.Contains(username, "%") {
+		pattern, err := sanitizeLikePattern(username)
+		if err != nil {
+			return query, err
+		}
+		query = query.Where("username LIKE ? ESCAPE '!'", pattern)
+	} else if username != "" {
+		query = query.Where("username = ?", username)
 	}
 	if filter.TokenName != "" {
 		query = query.Where("token_name = ?", filter.TokenName)
@@ -186,5 +197,5 @@ func applyRequestLogFilter(query *gorm.DB, filter RequestLogFilter) *gorm.DB {
 	if filter.EndTimestamp > 0 {
 		query = query.Where("created_at <= ?", filter.EndTimestamp)
 	}
-	return query
+	return query, nil
 }

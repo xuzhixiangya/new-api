@@ -240,6 +240,7 @@ export function formatModelName(log: UsageLog): {
   isMapped: boolean
   actualModel?: string
   responseModel?: LogOtherData['response_model']
+  smartRouter?: LogOtherData['smart_router']
 } {
   const other = parseLogOther(log.other)
   const isMapped = !!(
@@ -247,12 +248,17 @@ export function formatModelName(log: UsageLog): {
     other?.upstream_model_name &&
     other.upstream_model_name !== ''
   )
+  const smartRouter =
+    other?.smart_router?.requested && other.smart_router.model
+      ? other.smart_router
+      : undefined
 
   return {
     name: log.model_name,
     isMapped,
     actualModel: isMapped ? other.upstream_model_name : undefined,
     responseModel: other?.response_model,
+    smartRouter,
   }
 }
 

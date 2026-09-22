@@ -19,6 +19,8 @@ For commercial licensing, please contact support@quantumnous.com
 /**
  * Utility functions for usage logs feature
  */
+import dayjs from '@/lib/dayjs'
+
 import {
   getAllLogs,
   getUserLogs,
@@ -75,15 +77,28 @@ export function isPerCallBilling(modelPrice?: number): boolean {
 }
 
 /**
- * Get default time range (today 00:00:00 to now + 1 hour)
+ * Default log time range: today, matching the "Today" preset.
  */
 export function getDefaultTimeRange(): { start: Date; end: Date } {
-  const now = new Date()
-  const start = new Date(now)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(now.getTime() + 3600 * 1000) // +1 hour
+  const now = dayjs()
+  return {
+    start: now.startOf('day').toDate(),
+    end: now.endOf('day').toDate(),
+  }
+}
 
-  return { start, end }
+/**
+ * Unix-second form of the default log time range, used by request-log filters.
+ */
+export function getDefaultTimeRangeUnix(): {
+  startTimestamp: number
+  endTimestamp: number
+} {
+  const { start, end } = getDefaultTimeRange()
+  return {
+    startTimestamp: Math.floor(start.getTime() / 1000),
+    endTimestamp: Math.floor(end.getTime() / 1000),
+  }
 }
 
 /**

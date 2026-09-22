@@ -268,6 +268,12 @@ export type ModelSettings = {
   'group_ratio_setting.group_special_usable_group': string
   'model_deployment.ionet.api_key': string
   'model_deployment.ionet.enabled': boolean
+  'smart_router_setting.enabled': boolean
+  'smart_router_setting.cheap_model': string
+  'smart_router_setting.mid_model': string
+  'smart_router_setting.strong_model': string
+  'smart_router_setting.classifier_model': string
+  'smart_router_setting.classifier_timeout_ms': number
 }
 
 export type BillingSettings = {

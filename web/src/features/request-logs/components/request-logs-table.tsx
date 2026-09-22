@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ModelBadge } from '@/features/usage-logs/components/model-badge'
+import { getDefaultTimeRangeUnix } from '@/features/usage-logs/lib'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
 import { formatTimestamp, formatUseTime } from '@/lib/format'
@@ -82,17 +83,20 @@ export function RequestLogsTable() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const getColumnClassName = useCallback(() => 'py-2.5', [])
-  const [filters, setFilters] = useState<RequestLogFilters>({
-    userId: search.userId,
-    username: search.username || undefined,
-    tokenId: search.tokenId,
-    tokenName: search.tokenName || undefined,
-    model: search.model || undefined,
-    protocol: search.protocol || undefined,
-    status: search.status || undefined,
-    requestId: search.requestId || undefined,
-    startTimestamp: search.startTimestamp,
-    endTimestamp: search.endTimestamp,
+  const [filters, setFilters] = useState<RequestLogFilters>(() => {
+    const defaultTimeRange = getDefaultTimeRangeUnix()
+    return {
+      userId: search.userId,
+      username: search.username || undefined,
+      tokenId: search.tokenId,
+      tokenName: search.tokenName || undefined,
+      model: search.model || undefined,
+      protocol: search.protocol || undefined,
+      status: search.status || undefined,
+      requestId: search.requestId || undefined,
+      startTimestamp: search.startTimestamp ?? defaultTimeRange.startTimestamp,
+      endTimestamp: search.endTimestamp ?? defaultTimeRange.endTimestamp,
+    }
   })
   const { pagination, onPaginationChange, ensurePageInRange } =
     useTableUrlState({
@@ -102,8 +106,9 @@ export function RequestLogsTable() {
       globalFilter: { enabled: false },
       columnFilters: [],
     })
-  const appliedFilters = useMemo<RequestLogFilters>(
-    () => ({
+  const appliedFilters = useMemo<RequestLogFilters>(() => {
+    const defaultTimeRange = getDefaultTimeRangeUnix()
+    return {
       userId: search.userId,
       username: search.username || undefined,
       tokenId: search.tokenId,
@@ -112,11 +117,10 @@ export function RequestLogsTable() {
       protocol: search.protocol || undefined,
       status: search.status || undefined,
       requestId: search.requestId || undefined,
-      startTimestamp: search.startTimestamp,
-      endTimestamp: search.endTimestamp,
-    }),
-    [search]
-  )
+      startTimestamp: search.startTimestamp ?? defaultTimeRange.startTimestamp,
+      endTimestamp: search.endTimestamp ?? defaultTimeRange.endTimestamp,
+    }
+  }, [search])
   const query = useQuery({
     queryKey: [
       'request-logs',
@@ -309,11 +313,14 @@ export function RequestLogsTable() {
     void queryClient.invalidateQueries({ queryKey: ['request-logs'] })
   }
   const resetFilters = () => {
-    setFilters({})
+    const defaultTimeRange = getDefaultTimeRangeUnix()
+    setFilters(defaultTimeRange)
     void navigate({
       search: {
         page: 1,
         pageSize: pagination.pageSize,
+        startTimestamp: defaultTimeRange.startTimestamp,
+        endTimestamp: defaultTimeRange.endTimestamp,
       },
     })
     void queryClient.invalidateQueries({ queryKey: ['request-logs'] })

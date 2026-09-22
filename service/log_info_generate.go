@@ -95,6 +95,9 @@ func AppendRelayLogAdminInfo(ctx *gin.Context, relayInfo *relaycommon.RelayInfo,
 	if events := RequestPolicy(ctx).Events(); len(events) > 0 {
 		other.SetAdmin("request_policy", events)
 	}
+	if decision, ok := common.GetContextKeyType[SmartRouterDecision](ctx, constant.ContextKeySmartRouterDecision); ok {
+		other.SetPublic("smart_router", decision)
+	}
 }
 
 func GenerateTextOtherInfo(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, modelRatio, groupRatio, completionRatio float64,

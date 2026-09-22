@@ -258,6 +258,26 @@ it('collapses only date and statistics while keeping the right-hand quick action
   expect(await screen.findByText('Usage')).toBeVisible()
 })
 
+it('applies the 7 Days preset as the last 7 calendar days', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 8, 22, 12))
+  const user = userEvent.setup()
+  const onChange = vi.fn()
+  render(
+    <CompactDateTimeRangePicker
+      start={new Date(2026, 8, 22)}
+      end={new Date(2026, 8, 22)}
+      onChange={onChange}
+    />
+  )
+  await user.click(screen.getByRole('button', { name: /^2026/ }))
+  await user.click(screen.getByRole('button', { name: '7 Days' }))
+  expect(onChange).toHaveBeenCalledWith({
+    start: new Date(2026, 8, 16, 0, 0, 0, 0),
+    end: new Date(2026, 8, 22, 23, 59, 59, 999),
+  })
+})
+
 it.each([
   { language: 'zh', resources: zh.translation },
   { language: 'zh-TW', resources: zhTW.translation },

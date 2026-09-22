@@ -35,6 +35,13 @@ export const Route = createFileRoute(
         replace: true,
       })
     }
+    if (params.section === 'smart-router') {
+      throw redirect({
+        to: '/system-settings/models/$section',
+        params: { section: 'smart-router' },
+        replace: true,
+      })
+    }
 
     const validSections = OPERATIONS_SECTION_IDS as unknown as string[]
     if (!validSections.includes(params.section)) {

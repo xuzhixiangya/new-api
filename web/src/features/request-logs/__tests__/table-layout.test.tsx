@@ -58,6 +58,38 @@ vi.mock('../components/request-log-filter-bar', () => ({
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.useRealTimers()
+})
+
+it('queries today when the URL has no time range', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 8, 22, 12, 30, 0))
+  vi.mocked(api.get).mockResolvedValue({
+    data: {
+      success: true,
+      message: '',
+      total: 0,
+      data: [],
+    },
+  })
+  const i18n = createInstance()
+  await i18n.init({ lng: 'en', resources: { en } })
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+
+  render(
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={i18n}>
+        <RequestLogsTable />
+      </I18nextProvider>
+    </QueryClientProvider>
+  )
+
+  await waitFor(() => expect(api.get).toHaveBeenCalled())
+  expect(vi.mocked(api.get).mock.calls[0]?.[0]).toBe(
+    `/api/request_logs/?offset=0&limit=50&start_timestamp=${Math.floor(new Date(2026, 8, 22).getTime() / 1000)}&end_timestamp=${Math.floor(new Date(2026, 8, 22, 23, 59, 59, 999).getTime() / 1000)}`
+  )
 })
 
 it('renders request records with the shared user, token, model, and status visuals', async () => {

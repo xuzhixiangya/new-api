@@ -646,9 +646,15 @@ func GetUserModels(c *gin.Context) {
 	})
 }
 
+type updateUserRequest struct {
+	model.User
+	SmartRouterForced *bool `json:"smart_router_forced"`
+}
+
 func UpdateUser(c *gin.Context) {
-	var updatedUser model.User
-	err := common.DecodeJson(c.Request.Body, &updatedUser)
+	var req updateUserRequest
+	err := common.DecodeJson(c.Request.Body, &req)
+	updatedUser := req.User
 	if err != nil || updatedUser.Id == 0 {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
@@ -705,6 +711,14 @@ func UpdateUser(c *gin.Context) {
 	if err := model.PublishUserAuthCache(updatedUser.Id); err != nil {
 		common.ApiError(c, err)
 		return
+	}
+	if req.SmartRouterForced != nil {
+		setting := originUser.GetSetting()
+		setting.SmartRouterForced = *req.SmartRouterForced
+		if err := model.UpdateUserSetting(updatedUser.Id, setting); err != nil {
+			common.ApiError(c, err)
+			return
+		}
 	}
 	recordManageAuditFor(c, updatedUser.Id, "user.update", map[string]any{
 		"username": originUser.Username,
@@ -1375,14 +1389,13 @@ func UpdateUserSetting(c *gin.Context) {
 		upstreamModelUpdateNotifyEnabled = *req.UpstreamModelUpdateNotifyEnabled
 	}
 
-	// 构建设置
-	settings := dto.UserSetting{
-		NotifyType:                       req.QuotaWarningType,
-		QuotaWarningThreshold:            req.QuotaWarningThreshold,
-		UpstreamModelUpdateNotifyEnabled: upstreamModelUpdateNotifyEnabled,
-		AcceptUnsetRatioModel:            req.AcceptUnsetModelRatioModel,
-		RecordIpLog:                      req.RecordIpLog,
-	}
+	// 构建设置。先拷贝已有字段，避免用户改通知设置时冲掉管理员开关等配置。
+	settings := existingSettings
+	settings.NotifyType = req.QuotaWarningType
+	settings.QuotaWarningThreshold = req.QuotaWarningThreshold
+	settings.UpstreamModelUpdateNotifyEnabled = upstreamModelUpdateNotifyEnabled
+	settings.AcceptUnsetRatioModel = req.AcceptUnsetModelRatioModel
+	settings.RecordIpLog = req.RecordIpLog
 
 	// 如果是webhook类型,添加webhook相关设置
 	if req.QuotaWarningType == dto.NotifyTypeWebhook {

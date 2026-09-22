@@ -262,6 +262,10 @@ func ListModels(c *gin.Context, modelType int) {
 		userModelNames = append(userModelNames, modelName)
 	}
 
+	if service.ShouldExposeSmartRouterModel(tokenModelLimit, modelLimitEnable, userModelNames) {
+		userModelNames = append([]string{"auto"}, userModelNames...)
+	}
+
 	ownerByModel := map[string]string{}
 	if len(ownerGroups) > 0 {
 		ownerByModel = getPreferredModelOwners(userModelNames, ownerGroups)

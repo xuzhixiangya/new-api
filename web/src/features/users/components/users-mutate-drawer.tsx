@@ -53,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import {
   Sheet,
   SheetClose,
@@ -437,6 +438,32 @@ export function UsersMutateDrawer({
                             rows={3}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='smart_router_forced'
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className='flex items-center justify-between gap-4'>
+                          <div className='space-y-1'>
+                            <FormLabel>{t('Force smart router')}</FormLabel>
+                            <FormDescription>
+                              {t(
+                                'Route every chat and responses request for this user, even if they send a fixed model name.'
+                              )}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value === true}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

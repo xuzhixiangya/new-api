@@ -301,6 +301,29 @@ it('preserves model names and input order when grouping models', () => {
   })
 })
 
+it('stacks the original auto model above the routed model in the model cell', () => {
+  render(
+    <ModelBadge
+      modelName='openai/gpt-5.4'
+      smartRouter={{
+        requested: 'auto',
+        model: 'openai/gpt-5.4',
+        tier: 'mid',
+        stage: 'local',
+      }}
+    />
+  )
+  expect(screen.getByText('auto')).toBeVisible()
+  expect(screen.getByText('openai/gpt-5.4')).toBeVisible()
+  expect(
+    screen.getByRole('img', { name: 'Original Model → Routed Model' })
+  ).toBeVisible()
+  const stack = screen.getByRole('img', {
+    name: 'Original Model → Routed Model',
+  }).parentElement
+  expect(stack?.textContent).toMatch(/auto.*openai\/gpt-5\.4/s)
+})
+
 it('shows the OpenAI icon in the mobile model button', () => {
   render(
     <ModelBadge modelName='codex-auto-review' wrapText onInspect={vi.fn()} />

@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { AlertTriangle, Route } from 'lucide-react'
+import { AlertTriangle, ArrowDown, Route } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
@@ -39,12 +39,18 @@ interface ModelBadgeProps {
   modelName: string
   actualModel?: string
   responseModel?: LogOtherData['response_model']
+  smartRouter?: LogOtherData['smart_router']
   className?: string
   wrapText?: boolean
   onInspect?: () => void
 }
 
-function ModelBadgeContent(props: ModelBadgeProps & { copyable: boolean }) {
+function ModelBadgeContent(props: {
+  modelName: string
+  copyable: boolean
+  wrapText?: boolean
+  className?: string
+}) {
   const provider = resolveModelProvider(props.modelName)
 
   return (
@@ -90,6 +96,38 @@ function ModelBadgeContent(props: ModelBadgeProps & { copyable: boolean }) {
   )
 }
 
+function ModelRouteStack(props: {
+  from: string
+  to: string
+  copyable: boolean
+  wrapText?: boolean
+  className?: string
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div className='flex w-fit flex-col items-start gap-0.5'>
+      <ModelBadgeContent
+        modelName={props.from}
+        copyable={props.copyable}
+        wrapText={props.wrapText}
+        className={props.className}
+      />
+      <ArrowDown
+        className='text-muted-foreground ml-2 size-3'
+        role='img'
+        aria-label={`${t('Original Model')} → ${t('Routed Model')}`}
+      />
+      <ModelBadgeContent
+        modelName={props.to}
+        copyable={props.copyable}
+        wrapText={props.wrapText}
+        className={props.className}
+      />
+    </div>
+  )
+}
+
 export function ModelBadge(props: ModelBadgeProps) {
   const { t } = useTranslation()
   const mismatch = isResponseModelMismatch(props.responseModel)
@@ -99,7 +137,13 @@ export function ModelBadge(props: ModelBadgeProps) {
           model: props.responseModel.returned_model,
         })
       : ''
-  const modelLabel = `${t('Model')}: ${props.modelName}${responseModelLabel ? `, ${responseModelLabel}` : ''}`
+  const modelLabel = `${t('Model')}: ${props.modelName}${
+    props.smartRouter
+      ? `, ${t('Original Model')}: ${props.smartRouter.requested}`
+      : ''
+  }${responseModelLabel ? `, ${responseModelLabel}` : ''}`
+  const originalModel = props.smartRouter?.requested
+  const hasRouteStack = !!originalModel && originalModel !== props.modelName
   const hasDetails =
     !!props.actualModel ||
     !!(
@@ -111,6 +155,22 @@ export function ModelBadge(props: ModelBadgeProps) {
           props.responseModel.upstream_model !==
             props.responseModel.requested_model))
     )
+  const badge = hasRouteStack ? (
+    <ModelRouteStack
+      from={originalModel}
+      to={props.modelName}
+      copyable={!hasDetails && !props.onInspect}
+      wrapText={props.wrapText}
+      className={props.className}
+    />
+  ) : (
+    <ModelBadgeContent
+      modelName={props.modelName}
+      copyable={!hasDetails && !props.onInspect}
+      wrapText={props.wrapText}
+      className={props.className}
+    />
+  )
 
   if (!hasDetails) {
     if (props.onInspect) {
@@ -122,16 +182,16 @@ export function ModelBadge(props: ModelBadgeProps) {
           iconClassName='hidden'
           className='h-auto min-h-8 max-w-full min-w-0 justify-start px-0 py-0 text-left font-normal whitespace-normal'
         >
-          <ModelBadgeContent {...props} copyable={false} />
+          {badge}
         </CopyButton>
       )
     }
-    return <ModelBadgeContent {...props} copyable />
+    return badge
   }
 
   const content = (
     <>
-      <ModelBadgeContent {...props} copyable={false} />
+      {badge}
       {mismatch && (
         <StatusBadge
           icon={AlertTriangle}
@@ -163,6 +223,32 @@ export function ModelBadge(props: ModelBadgeProps) {
     )
   }
 
+  let mappingDetails = null
+  if (props.responseModel) {
+    mappingDetails = <ResponseModelDetails observation={props.responseModel} />
+  } else if (props.actualModel) {
+    mappingDetails = (
+      <div className='space-y-2'>
+        <div className='flex items-start justify-between gap-3'>
+          <span className='text-muted-foreground text-xs'>
+            {t('Request Model:')}
+          </span>
+          <span className='truncate font-mono text-xs font-medium'>
+            {props.modelName}
+          </span>
+        </div>
+        <div className='flex items-start justify-between gap-3'>
+          <span className='text-muted-foreground text-xs'>
+            {t('Actual Model:')}
+          </span>
+          <span className='truncate font-mono text-xs font-medium'>
+            {props.actualModel}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <Popover>
       <PopoverTrigger
@@ -177,28 +263,7 @@ export function ModelBadge(props: ModelBadgeProps) {
         {content}
       </PopoverTrigger>
       <PopoverContent className='w-96 max-w-[calc(100vw-2rem)]'>
-        {props.responseModel ? (
-          <ResponseModelDetails observation={props.responseModel} />
-        ) : (
-          <div className='space-y-2'>
-            <div className='flex items-start justify-between gap-3'>
-              <span className='text-muted-foreground text-xs'>
-                {t('Request Model:')}
-              </span>
-              <span className='truncate font-mono text-xs font-medium'>
-                {props.modelName}
-              </span>
-            </div>
-            <div className='flex items-start justify-between gap-3'>
-              <span className='text-muted-foreground text-xs'>
-                {t('Actual Model:')}
-              </span>
-              <span className='truncate font-mono text-xs font-medium'>
-                {props.actualModel}
-              </span>
-            </div>
-          </div>
-        )}
+        <div className='min-w-0 space-y-3'>{mappingDetails}</div>
       </PopoverContent>
     </Popover>
   )

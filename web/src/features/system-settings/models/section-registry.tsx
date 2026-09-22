@@ -23,6 +23,7 @@ import { ClaudeSettingsCard } from './claude-settings-card'
 import { GeminiSettingsCard } from './gemini-settings-card'
 import { GlobalSettingsCard } from './global-settings-card'
 import { GrokSettingsCard } from './grok-settings-card'
+import { SmartRouterSection } from './smart-router-section'
 
 function formatJsonForEditor(value: string, fallback: string) {
   const raw = (value ?? '').toString().trim()
@@ -63,7 +64,28 @@ const MODELS_SECTIONS = [
       />
     ),
   },
-
+  {
+    id: 'smart-router',
+    titleKey: 'Smart Router',
+    build: (settings: ModelSettings) => (
+      <SmartRouterSection
+        defaultValues={{
+          'smart_router_setting.enabled':
+            settings['smart_router_setting.enabled'] ?? false,
+          'smart_router_setting.cheap_model':
+            settings['smart_router_setting.cheap_model'] ?? '',
+          'smart_router_setting.mid_model':
+            settings['smart_router_setting.mid_model'] ?? '',
+          'smart_router_setting.strong_model':
+            settings['smart_router_setting.strong_model'] ?? '',
+          'smart_router_setting.classifier_model':
+            settings['smart_router_setting.classifier_model'] ?? '',
+          'smart_router_setting.classifier_timeout_ms':
+            settings['smart_router_setting.classifier_timeout_ms'] ?? 400,
+        }}
+      />
+    ),
+  },
   {
     id: 'gemini',
     titleKey: 'Gemini',

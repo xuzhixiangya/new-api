@@ -30,6 +30,8 @@ import {
 import dayjs from '@/lib/dayjs'
 import { cn } from '@/lib/utils'
 
+import { getDefaultTimeRange } from '../lib/utils'
+
 interface CompactDateTimeRangePickerProps {
   start?: Date
   end?: Date
@@ -96,10 +98,7 @@ export function CompactDateTimeRangePicker({
   const applyPreset = (kind: 'today' | '7d' | 'week' | '30d' | 'month') => {
     const now = dayjs()
     const presets = {
-      today: {
-        start: now.startOf('day').toDate(),
-        end: now.endOf('day').toDate(),
-      },
+      today: getDefaultTimeRange(),
       '7d': {
         start: now.subtract(6, 'day').startOf('day').toDate(),
         end: now.endOf('day').toDate(),
