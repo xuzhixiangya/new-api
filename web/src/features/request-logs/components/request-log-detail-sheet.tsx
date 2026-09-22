@@ -273,7 +273,7 @@ export function RequestLogDetailSheet(props: {
 
   return (
     <Sheet open={props.open} onOpenChange={props.onOpenChange}>
-      <SheetContent className='w-full sm:max-w-5xl'>
+      <SheetContent className='z-[60] w-full sm:max-w-5xl'>
         <SheetHeader className='border-b pr-14'>
           <SheetTitle>{t('Request log details')}</SheetTitle>
           <SheetDescription>

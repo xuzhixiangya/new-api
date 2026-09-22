@@ -90,6 +90,7 @@ import {
 import { USAGE_BILLING_PATH, type LogOtherData } from '../../types'
 import { ResponseModelDetails } from '../model-badge'
 import { PluginAuthorLink } from '../plugin-author-link'
+import { LinkedRequestLog } from './linked-request-log'
 import { DetailRow, DetailSection } from './log-detail-layout'
 
 // Maps a channel-update changed-field token (as recorded by the backend audit)
@@ -655,6 +656,12 @@ export function DetailsDialog(props: DetailsDialogProps) {
               label={t('Request ID')}
               value={props.log.request_id}
               mono
+            />
+          )}
+          {props.isAdmin && props.log.request_id && (
+            <LinkedRequestLog
+              requestId={props.log.request_id}
+              enabled={props.open}
             />
           )}
           {props.log.upstream_request_id && (

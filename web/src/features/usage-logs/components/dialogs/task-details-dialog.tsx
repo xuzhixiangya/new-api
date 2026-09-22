@@ -30,6 +30,7 @@ import { taskActionMapper, taskStatusMapper } from '../../lib/mappers'
 import { resolveTaskDetailAccess } from '../../lib/task-details'
 import type { TaskLog } from '../../types'
 import { PluginAuthorLink } from '../plugin-author-link'
+import { LinkedRequestLog } from './linked-request-log'
 
 function DetailRow(props: {
   label: React.ReactNode
@@ -191,6 +192,12 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
                 label={t('Request ID')}
                 value={props.log.admin_info.request_id}
                 mono
+              />
+            ) : null}
+            {props.log.admin_info?.request_id ? (
+              <LinkedRequestLog
+                requestId={props.log.admin_info.request_id}
+                enabled={props.open}
               />
             ) : null}
             {props.log.admin_info?.request_path ? (
