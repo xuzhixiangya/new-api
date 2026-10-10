@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var expectedKeys = []string{"alibaba", "doubao", "google", "hailuo", "jimeng", "kling", "sora", "sunoapi", "vertex-ai", "vidu"}
+var expectedKeys = []string{"alibaba", "doubao", "google", "hailuo", "jimeng", "kling", "sora", "sunoapi", "vertex-ai", "vidu", "zenmux"}
 
 func TestBuiltInVendorPluginsDeclareNativeRoutesAndLegacyChannelTypes(t *testing.T) {
 	generation := jsplugin.DefaultRegistry.Generation()
@@ -371,4 +371,82 @@ func TestBuiltInPluginsAddressNewAPIUpstreamOnNativeRoutes(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestZenMuxVideoUsesNativeVideosAPI(t *testing.T) {
+	source, sourceErr := Source("zenmux")
+	require.NoError(t, sourceErr)
+	registry := jsplugin.NewRegistry()
+	plugin, registerErr := registry.RegisterFactory(source, jsplugin.Options{Key: "zenmux"})
+	require.NoError(t, registerErr)
+	assert.False(t, plugin.Meta.SupportsUpstream(jsplugin.UpstreamKindNewAPI))
+
+	call := func(hook string, args ...any) map[string]any {
+		value, err := plugin.Engine.Call(t.Context(), hook, args...)
+		require.NoError(t, err, hook)
+		encoded, err := common.Marshal(value)
+		require.NoError(t, err)
+		var decoded map[string]any
+		require.NoError(t, common.Unmarshal(encoded, &decoded))
+		return decoded
+	}
+
+	ctx := map[string]any{
+		"baseUrl": "https://zenmux.dev/api", "apiKey": "vendor-key", "model": "alias",
+		"upstreamModel": "bytedance/doubao-seedance-2.5",
+		"requestBody":   map[string]any{"prompt": "a cat", "seconds": 5, "resolution": "480p", "ratio": "16:9", "generate_audio": false},
+	}
+	submit := call("buildSubmitRequest", ctx)
+	assert.Equal(t, "https://zenmux.dev/api/v1/videos", submit["url"])
+	assert.Equal(t, "POST", submit["method"])
+	headers, _ := submit["headers"].(map[string]any)
+	assert.Equal(t, "Bearer vendor-key", headers["Authorization"])
+	body, _ := submit["body"].(map[string]any)
+	assert.Equal(t, "bytedance/doubao-seedance-2.5", body["model"])
+	assert.Equal(t, "480p", body["resolution"])
+	assert.Equal(t, "16:9", body["ratio"])
+	assert.Equal(t, float64(5), body["duration"])
+	assert.Equal(t, false, body["generate_audio"])
+	content, _ := body["content"].([]any)
+	require.Len(t, content, 1)
+
+	query := call("buildQueryRequest", map[string]any{"baseUrl": "https://zenmux.dev/api/", "apiKey": "vendor-key", "taskId": "job-1"})
+	assert.Equal(t, "https://zenmux.dev/api/v1/videos/job-1", query["url"])
+
+	succeeded := call("parseTaskResult", nil, map[string]any{"status": "succeeded", "content": map[string]any{"video_url": "https://cdn.example/a.mp4"}})
+	assert.Equal(t, "SUCCESS", succeeded["status"])
+	assert.Equal(t, "https://cdn.example/a.mp4", succeeded["url"])
+	unknown := call("parseTaskResult", nil, map[string]any{"status": "mystery"})
+	assert.Equal(t, "UNKNOWN", unknown["status"])
+	missing := call("parseTaskResult", nil, map[string]any{"error": map[string]any{"message": "Video task not found"}})
+	assert.Equal(t, "FAILURE", missing["status"])
+
+	contentReq := call("buildContentRequest", map[string]any{
+		"artifactKey": "video", "clientRequest": map[string]any{"method": "GET"},
+		"data": map[string]any{"content": map[string]any{"video_url": "https://cdn.example/a.mp4"}},
+	})
+	assert.Equal(t, "https://cdn.example/a.mp4", contentReq["url"])
+	assert.Equal(t, true, contentReq["credentialless"])
+
+	rendered, renderErr := plugin.Engine.CallPath(t.Context(), "protocols", []string{"openai_video", "render"}, map[string]any{}, map[string]any{
+		"task_id": "task_pub", "status": "SUCCESS", "progress": "100%", "created_at": 10,
+		"data": map[string]any{"content": map[string]any{"video_url": "https://cdn.example/a.mp4"}},
+	})
+	require.NoError(t, renderErr)
+	renderedBytes, marshalErr := common.Marshal(rendered)
+	require.NoError(t, marshalErr)
+	var renderedVideo map[string]any
+	require.NoError(t, common.Unmarshal(renderedBytes, &renderedVideo))
+	assert.Equal(t, "https://cdn.example/a.mp4", renderedVideo["url"])
+
+	_, err := plugin.Engine.Call(t.Context(), "buildSubmitRequest", map[string]any{
+		"baseUrl": "https://zenmux.dev/api", "apiKey": "vendor-key", "upstreamModel": "bytedance/doubao-seedance-2.5",
+		"requestBody": map[string]any{"prompt": "a cat", "seconds": 0},
+	})
+	require.Error(t, err)
+	_, err = plugin.Engine.Call(t.Context(), "buildSubmitRequest", map[string]any{
+		"baseUrl": "https://zenmux.dev/api", "apiKey": "vendor-key", "upstreamModel": "bytedance/doubao-seedance-2.5",
+		"requestBody": map[string]any{"prompt": "a cat", "seconds": 61},
+	})
+	require.Error(t, err)
 }
